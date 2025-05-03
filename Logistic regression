@@ -1,0 +1,52 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import make_classification as mc
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+#Generate synthetic dataset
+X,y = mc(n_samples = 1000,n_features = 10,n_classes = 2,random_state = 42)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3, random_state = 42)
+
+#create a logistic regresssion model
+log_reg = LogisticRegression()
+log_reg.fit(X_train,y_train)
+y_pred = log_reg.predict(X_test)
+print(y_pred)
+
+#calculate confusion matrix
+conf_matrix = confusion_matrix(y_test,y_pred)
+class_report = classification_report(y_test,y_pred)
+print("confusion matrix : \n",conf_matrix)
+print("\nclassification report : ",class_report)
+sns.heatmap(conf_matrix,annot=True,fmt = 'd', cmap='Reds',cbar=True)
+
+#plot the decision boundary
+plt.figure(figsize=(10,6))
+colors={'X_test': 'plasma' , 'y_test': 'viridis'}
+plt.scatter(X_test[:,0],X_test[:,1] ,c=y_test,cmap='plasma',edgecolors ='k',alpha=0.5)
+
+#create a mesh to plot the decision boundary
+x_min,x_max=X[:,0].min()-1,X[:,0].max()+1
+y_min,y_max=X[:,1].min()-1,X[:,1].max()+1
+xx,yy=np.meshgrid(np.arange(x_min,x_max,0.01), np.arange(y_min,y_max,0.01))
+# Create a dataset with all 10 features for prediction
+# Assuming the other 8 features are constant at their mean values
+X_grid = np.zeros((xx.ravel().shape[0], 10))
+X_grid[:, 0] = xx.ravel()
+X_grid[:, 1] = yy.ravel()
+for i in range(2, 10):
+    X_grid[:, i] = X[:, i].mean()  # Set other features to their mean
+
+z=log_reg.predict(X_grid) # Predict using all 10 features
+z=z.reshape(xx.shape)
+#visualioxing the result
+plt.contourf(xx,yy,z,alpha=0.3,cmap='viridis')
+plt.xlabel('fearture 1')
+plt.ylabel('feature 2')
+plt.title('Logistic Regression Decision Boundary')
+plt.show()
