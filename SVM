@@ -1,0 +1,110 @@
+# import all the libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+
+# Load the Iris Dataset
+iris = load_iris()
+print(iris.feature_names)
+print(iris.target_names)
+
+# convert to Dataframe for convinience
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+# As the target variables column is missing in the dataset
+# so we need to embed the 'species' column
+df['species'] = iris.target
+print(df.head(100))
+
+df.iloc[0:1000].to_excel('iris_no name.xlsx', index=True)
+
+# Mapping the species value to actual names for better understanding
+df['species'] = df['species'].map({0:'setosa', 1:'versicolor', 2:'virginica'})
+
+# Exporting the dataset on an Excel file for better analytics
+df.iloc[0:1000].to_excel('iris_names.xlsx', index=True)
+
+# Features and target assignments
+X = df.drop('species', axis=1)
+y = df['species']
+print(y.head(60))
+
+# splitting the dataset for training and testing purpose
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.7, random_state=52)
+
+# Calling / creating the SVM ML model
+svm = SVC()
+
+# tRAINING / FITING THE MODEL with the training vector
+svm.fit(X_train, y_train)
+
+# Prediction by SVM
+y_pred = svm.predict(X_test)
+print(y_pred)
+
+# Calculate the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+
+# Generate the classification report & the accuracy score (ML model accuracy)
+class_report = classification_report(y_test, y_pred)
+acc_score = accuracy_score(y_test, y_pred)
+
+
+# Print all the relevant reports
+print("Confusion Matrix:\n", cm)
+print("\nClassification Report:\n", class_report)
+print(f"\nACCURACY SCORE:, {acc_score*100:.2f}%")
+
+# Plot the confusion matrix
+# set the figure size
+fig, ax = plt.subplots(figsize=(6,4))
+
+# plot the confusion matrix
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=svm.classes_)
+disp.plot(cmap='Oranges', ax=ax)
+plt.title('Confusion Matrix of Support Vector Machine without Hyperplane Optimisation')
+plt.show()
+
+# dEFINE THE PARAMETER GRID
+param_grid = {'C': [0.1, 1, 10, 100], 'kernel': ['linear','poly', 'rbf', 'sigmoid'], 'gamma': ['scale', 'auto']}
+
+# step - 2: Create a GridSearchCV object (Cross-validation process)
+grid_search = GridSearchCV(SVC(), param_grid, cv=5,scoring='accuracy')
+
+# STEP-3 : tRAIN / FIt the grid search to the data
+grid_search.fit(X_train, y_train)
+
+# Print the best Estimator parameters and the best score
+print("Best Estimator:\n", grid_search.best_estimator_)
+print("Best Score:\n", grid_search.best_score_)
+
+# STEP-4: Prediction using the best estimator values
+best_svm = grid_search.best_estimator_
+y_pred_best = best_svm.predict(X_test)
+
+
+# calculate confusion MatriX FOr the best EsTIMator or , optimAL svm
+cm_best = confusion_matrix(y_test, y_pred_best)
+
+# plot the best confusion matrix
+fig, ax = plt.subplots(figsize=(6,4))
+
+# plot the confusion matrix
+disp = ConfusionMatrixDisplay(confusion_matrix=cm_best, display_labels=svm.classes_)
+disp.plot(cmap='Greens', ax=ax)
+plt.title('Confusion Matrix of Support Vector Machine with Hyperplane Optimisation')
+plt.show()
+
+# Genearate the classification report for the optimised hyperplane / hypermeers
+class_report_best = classification_report(y_test, y_pred_best)
+acc_score_best = accuracy_score(y_test, y_pred_best)
+
+print('\nconfusion matrix:',cm_best)
+print('\nClassification Report:',class_report_best)
+print(f'\nACCURACY SCORE:, {acc_score_best*100:.2f}%')
